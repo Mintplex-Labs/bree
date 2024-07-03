@@ -1,5 +1,6 @@
 // Definitions by: Taylor Schley <https://github.com/shadowgate15>
 
+import { type ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { type WorkerOptions, type Worker } from 'node:worker_threads';
 import { type Timeout, type Interval } from 'safe-timers';
@@ -12,7 +13,7 @@ declare class Bree extends EventEmitter {
   config: Bree.BreeConfigs;
 
   closeWorkerAfterMs: Map<string, Timeout>;
-  workers: Map<string, Worker>;
+  workers: Map<string, Worker | ChildProcess>;
   timeouts: Map<string, Timeout>;
   intervals: Map<string, Interval>;
 
@@ -81,6 +82,7 @@ declare namespace Bree {
     worker?: Partial<WorkerOptions>;
     outputWorkerMetadata?: boolean;
     timezone?: string;
+    runAs?: 'worker' | 'process';
   };
 
   type JobOptions = Required<Pick<Job, 'name'>> & Partial<Omit<Job, 'name'>>;
@@ -102,6 +104,7 @@ declare namespace Bree {
     defaultExtension: string;
     acceptedExtensions: string[];
     worker: WorkerOptions;
+    runJobsAs?: 'worker' | 'process';
     errorHandler?: (error: any, workerMetadata: any) => void;
     workerMessageHandler?: (message: any, workerMetadata: any) => void;
     outputWorkerMetadata: boolean;

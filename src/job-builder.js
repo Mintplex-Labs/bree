@@ -7,7 +7,12 @@ const { isSchedule, parseValue, getJobPath } = require('./job-utils');
 
 later.date.localTime();
 
-// eslint-disable-next-line complexity
+/**
+ *
+ * @param {import('.').JobOptions} job
+ * @param {import('.').BreeConfigs} config
+ * @returns {import('.').JobOptions}
+ */
 const buildJob = (job, config) => {
   if (isSANB(job)) {
     const path = join(
@@ -19,7 +24,8 @@ const buildJob = (job, config) => {
       name: job,
       path,
       timeout: config.timeout,
-      interval: config.interval
+      interval: config.interval,
+      runAs: config?.runJobsAs ?? 'worker'
     };
     if (isSANB(config.timezone)) {
       jobObject.timezone = config.timezone;
@@ -36,7 +42,8 @@ const buildJob = (job, config) => {
       path,
       worker: { eval: true },
       timeout: config.timeout,
-      interval: config.interval
+      interval: config.interval,
+      runAs: 'worker' // cannot run job in fork as a function.
     };
     if (isSANB(config.timezone)) {
       jobObject.timezone = config.timezone;
@@ -130,6 +137,13 @@ const buildJob = (job, config) => {
   if (isSANB(config.timezone) && !job.timezone) {
     job.timezone = config.timezone;
   }
+
+  // if config for runJobsAs was defined we can set that job property here
+  // as long as it is not a function string exec/eval.
+  job.runAs =
+    typeof job.path !== 'function' && config.runJobsAs
+      ? config.runJobsAs
+      : job.runAs ?? 'worker'; // fallback to always have this value assigned to at least 'worker'
 
   return job;
 };

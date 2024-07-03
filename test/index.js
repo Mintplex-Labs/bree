@@ -19,7 +19,9 @@ test('successfully run job', async (t) => {
   t.plan(2);
 
   const logger = {
-    info() {}
+    info() {},
+    warn() {},
+    error() {}
   };
 
   const bree = new Bree({
@@ -75,6 +77,7 @@ test('throws if jobs is not an array and logs ERR_MODULE_NOT_FOUND error by defa
 
   const logger = {
     info() {},
+    warn() {},
     error(err) {
       t.is(err.code, 'ERR_MODULE_NOT_FOUND');
     }
@@ -95,6 +98,7 @@ test('logs ERR_MODULE_NOT_FOUND error if array is empty', async (t) => {
 
   const logger = {
     info() {},
+    warn() {},
     error(err) {
       t.is(err.code, 'ERR_MODULE_NOT_FOUND');
     }
@@ -115,6 +119,7 @@ test('logs ERR_MODULE_NOT_FOUND error if array is empty', async (t) => {
 test('does not log ERR_MODULE_NOT_FOUND error if silenceRootCheckError is false', async (t) => {
   const logger = {
     info() {},
+    warn() {},
     error() {
       t.fail();
     }
@@ -136,6 +141,7 @@ test('does not log ERR_MODULE_NOT_FOUND error if silenceRootCheckError is false'
 test('does not log ERR_MODULE_NOT_FOUND error if doRootCheck is false', async (t) => {
   const logger = {
     info() {},
+    warn() {},
     error() {
       t.fail();
     }
@@ -362,4 +368,165 @@ test(`bree.init() is called if bree.add() is called`, async (t) => {
   t.true(bree._init);
   await bree.add('message');
   t.true(bree._init);
+});
+
+test('successfully run job without "runAs" or config "runJobsAs" will make workers.', async (t) => {
+  t.plan(2);
+
+  const logger = {
+    info() {}
+  };
+
+  const bree = new Bree({
+    jobs: [
+      {
+        name: 'basic'
+      }
+    ],
+    ...baseConfig,
+    logger
+  });
+
+  await bree.start();
+
+  bree.on('worker created', (name) => {
+    const worker = bree.workers.get(name);
+    t.true(Boolean(worker));
+    t.true(Boolean(worker?.postMessage));
+  });
+
+  await delay(100);
+
+  await bree.stop();
+});
+
+test('successfully run job with runAs === "worker" to make worker.', async (t) => {
+  t.plan(2);
+
+  const logger = {
+    info() {}
+  };
+
+  const bree = new Bree({
+    jobs: [
+      {
+        name: 'basic',
+        runAs: 'worker'
+      }
+    ],
+    ...baseConfig,
+    logger
+  });
+
+  await bree.start();
+
+  bree.on('worker created', (name) => {
+    const worker = bree.workers.get(name);
+    t.true(Boolean(worker));
+    t.true(Boolean(worker?.postMessage));
+  });
+
+  await delay(100);
+
+  await bree.stop();
+});
+
+test('successfully run job with runAs === "process" to make fork.', async (t) => {
+  t.plan(2);
+
+  const logger = {
+    info() {},
+    warn() {},
+    error() {}
+  };
+
+  const bree = new Bree({
+    jobs: [
+      {
+        name: 'basic',
+        runAs: 'process'
+      }
+    ],
+    ...baseConfig,
+    logger
+  });
+
+  await bree.start();
+
+  bree.on('worker created', (name) => {
+    const worker = bree.workers.get(name);
+    t.true(Boolean(worker));
+    t.true(worker?.postMessage === undefined); // processes don't have postMessage
+  });
+
+  await delay(100);
+
+  await bree.stop();
+});
+
+test('successfully apply config runJobAs: "process" to make forked jobs.', async (t) => {
+  t.plan(2);
+
+  const logger = {
+    info() {},
+    warn() {},
+    error() {}
+  };
+
+  const bree = new Bree({
+    runJobsAs: 'process',
+    jobs: [
+      {
+        name: 'basic'
+      }
+    ],
+    ...baseConfig,
+    logger
+  });
+
+  await bree.start();
+
+  bree.on('worker created', (name) => {
+    const worker = bree.workers.get(name);
+    t.true(Boolean(worker));
+    t.true(worker?.postMessage === undefined); // processes don't have postMessage
+  });
+
+  await delay(100);
+
+  await bree.stop();
+});
+
+test('job runAs is overwritten by bree config successfully.', async (t) => {
+  t.plan(2);
+
+  const logger = {
+    info() {},
+    warn() {},
+    error() {}
+  };
+
+  const bree = new Bree({
+    runJobsAs: 'process',
+    jobs: [
+      {
+        name: 'basic',
+        runAs: 'worker'
+      }
+    ],
+    ...baseConfig,
+    logger
+  });
+
+  await bree.start();
+
+  bree.on('worker created', (name) => {
+    const worker = bree.workers.get(name);
+    t.true(Boolean(worker));
+    t.true(worker?.postMessage === undefined); // processes don't have postMessage
+  });
+
+  await delay(100);
+
+  await bree.stop();
 });

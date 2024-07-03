@@ -15,6 +15,13 @@ const baseConfig = {
   acceptedExtensions: ['.js', '.mjs']
 };
 
+const baseJobConfig = {
+  name: 'basic',
+  path: jobPathBasic,
+  timeout: 0,
+  interval: 0
+};
+
 function job(t, _job, config, expected) {
   t.deepEqual(
     jobBuilder(_job || 'basic', { ...baseConfig, ...config }),
@@ -27,7 +34,13 @@ test(
   job,
   null,
   {},
-  { name: 'basic', path: jobPathBasic, timeout: 0, interval: 0 }
+  {
+    name: 'basic',
+    path: jobPathBasic,
+    timeout: 0,
+    interval: 0,
+    runAs: 'worker'
+  }
 );
 
 test(
@@ -39,7 +52,8 @@ test(
     name: 'basic.js',
     path: jobPathBasic,
     timeout: 0,
-    interval: 0
+    interval: 0,
+    runAs: 'worker'
   }
 );
 
@@ -59,7 +73,8 @@ test(
     path: `(${basic.toString()})()`,
     worker: { eval: true },
     timeout: 0,
-    interval: 0
+    interval: 0,
+    runAs: 'worker'
   }
 );
 
@@ -71,7 +86,8 @@ test(
   {
     path: `(${basic.toString()})()`,
     worker: { eval: true, test: 1 },
-    timeout: 0
+    timeout: 0,
+    runAs: 'worker'
   }
 );
 
@@ -80,7 +96,7 @@ test(
   job,
   { name: 'basic', path: '' },
   {},
-  { name: 'basic', path: jobPathBasic, timeout: 0 }
+  { name: 'basic', path: jobPathBasic, timeout: 0, runAs: 'worker' }
 );
 
 test(
@@ -88,7 +104,7 @@ test(
   job,
   { name: 'basic.js', path: '' },
   {},
-  { name: 'basic.js', path: jobPathBasic, timeout: 0 }
+  { name: 'basic.js', path: jobPathBasic, timeout: 0, runAs: 'worker' }
 );
 
 test(
@@ -96,7 +112,7 @@ test(
   job,
   { path: jobPathBasic },
   {},
-  { path: jobPathBasic, timeout: 0 }
+  { path: jobPathBasic, timeout: 0, runAs: 'worker' }
 );
 
 test(
@@ -104,7 +120,7 @@ test(
   job,
   { path: '*.js', worker: { test: 1 } },
   {},
-  { path: '*.js', timeout: 0, worker: { eval: true, test: 1 } }
+  { path: '*.js', timeout: 0, worker: { eval: true, test: 1 }, runAs: 'worker' }
 );
 
 test(
@@ -112,7 +128,7 @@ test(
   job,
   { path: jobPathBasic, timeout: 10 },
   {},
-  { path: jobPathBasic, timeout: 10 }
+  { path: jobPathBasic, timeout: 10, runAs: 'worker' }
 );
 
 test(
@@ -120,7 +136,7 @@ test(
   job,
   { path: jobPathBasic, interval: 10 },
   {},
-  { path: jobPathBasic, interval: 10 }
+  { path: jobPathBasic, interval: 10, runAs: 'worker' }
 );
 
 test(
@@ -131,7 +147,8 @@ test(
   {
     path: jobPathBasic,
     cron: '* * * * *',
-    interval: later.parse.cron('* * * * *')
+    interval: later.parse.cron('* * * * *'),
+    runAs: 'worker'
   }
 );
 
@@ -144,7 +161,8 @@ test(
     path: jobPathBasic,
     cron: '* * * * *',
     interval: later.parse.cron('* * * * *'),
-    hasSeconds: false
+    hasSeconds: false,
+    runAs: 'worker'
   }
 );
 
@@ -156,7 +174,8 @@ test(
   {
     path: jobPathBasic,
     cron: later.parse.cron('* * * * *'),
-    interval: later.parse.cron('* * * * *')
+    interval: later.parse.cron('* * * * *'),
+    runAs: 'worker'
   }
 );
 
@@ -165,7 +184,13 @@ test(
   job,
   { name: 'basic', interval: undefined },
   { interval: 10 },
-  { name: 'basic', path: jobPathBasic, timeout: 0, interval: 10 }
+  {
+    name: 'basic',
+    path: jobPathBasic,
+    timeout: 0,
+    interval: 10,
+    runAs: 'worker'
+  }
 );
 
 test(
@@ -178,7 +203,8 @@ test(
     name: 'basic',
     path: jobPathBasic,
     timeout: 0,
-    interval: 0
+    interval: 0,
+    runAs: 'worker'
   }
 );
 
@@ -193,6 +219,7 @@ test(
     path: `(${basic.toString()})()`,
     timeout: 0,
     interval: 0,
+    runAs: 'worker',
     worker: { eval: true }
   }
 );
@@ -206,7 +233,8 @@ test(
     timezone: 'local',
     name: 'basic',
     path: jobPathBasic,
-    timeout: 0
+    timeout: 0,
+    runAs: 'worker'
   }
 );
 
@@ -219,6 +247,46 @@ test(
     timezone: 'America/New_York',
     name: 'basic',
     path: jobPathBasic,
-    timeout: 0
+    timeout: 0,
+    runAs: 'worker'
   }
 );
+
+test('successfully applies job runAs', (t) => {
+  t.plan(3);
+  const base_job = jobBuilder({ ...baseJobConfig }, { ...baseConfig });
+  const proc_job = jobBuilder(
+    { ...baseJobConfig, runAs: 'process' },
+    { ...baseConfig }
+  );
+  const worker_job = jobBuilder(
+    { ...baseJobConfig, runAs: 'worker' },
+    { ...baseConfig }
+  );
+
+  t.true(base_job.runAs === 'worker');
+  t.true(proc_job.runAs === 'process');
+  t.true(worker_job.runAs === 'worker');
+});
+
+test('successfully overwrites job runAs with breeConfig', (t) => {
+  t.plan(4);
+  const job1 = jobBuilder(
+    { ...baseJobConfig, runAs: 'worker' },
+    { ...baseConfig, runJobsAs: 'process' }
+  ); // inherit process
+  const job2 = jobBuilder(
+    { ...baseJobConfig, runAs: 'process' },
+    { ...baseConfig, runJobsAs: 'worker' }
+  ); // inherit worker
+  const job3 = jobBuilder(
+    { ...baseJobConfig },
+    { ...baseConfig, runJobsAs: 'process' }
+  ); // inherit process
+  const job4 = jobBuilder({ ...baseJobConfig }, { ...baseConfig }); // base config
+
+  t.true(job1.runAs === 'process');
+  t.true(job2.runAs === 'worker');
+  t.true(job3.runAs === 'process');
+  t.true(job4.runAs === 'worker');
+});

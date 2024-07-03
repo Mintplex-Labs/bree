@@ -1,21 +1,13 @@
-<h1 align="center">
-  <a href="https://jobscheduler.net"><img src="https://d1i8ikybhfrv4r.cloudfront.net/bree/bree.png" alt="bree" /></a>
-</h1>
-<div align="center">
-  <a href="https://github.com/breejs/bree/actions/workflows/ci.yml"><img src="https://github.com/breejs/bree/actions/workflows/ci.yml/badge.svg" alt="build status" /></a>
-  <a href="https://github.com/sindresorhus/xo"><img src="https://img.shields.io/badge/code_style-XO-5ed9c7.svg" alt="code style" /></a>
-  <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-prettier-ff69b4.svg" alt="styled with prettier" /></a>
-  <a href="https://lass.js.org"><img src="https://img.shields.io/badge/made_with-lass-95CC28.svg" alt="made with lass" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/breejs/bree.svg" alt="license" /></a>
-  <a href="https://npm.im/bree"><img src="https://img.shields.io/npm/dt/bree.svg" alt="npm downloads" /></a>
-</div>
-<br />
+> \[!IMPORTANT]\
+> This is a customized fork of [BreeJS](https://github.com/breejs/bree) the allows use of multi-process support as well
+> as worker threads. You should use the original project if you only need worker thread support.
+
 <div align="center">
   Bree is the best job scheduler for <a href="https://nodejs.org">Node.js</a> and JavaScript with <a href="https://en.wikipedia.org/wiki/Cron">cron</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">dates</a>, <a href="https://github.com/vercel/ms">ms</a>, <a href="https://github.com/breejs/later">later</a>, and <a href="https://github.com/agenda/human-interval">human-friendly</a> support.
 </div>
 <hr />
 <div align="center">
-  Works in Node v12.17.0+, uses <a href="https://nodejs.org/api/worker_threads.html">worker threads</a> (Node.js) to spawn sandboxed processes, and supports <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function">async/await</a>, <a href="https://github.com/sindresorhus/p-retry">retries</a>, <a href="https://github.com/sindresorhus/p-throttle">throttling</a>, <a href="#concurrency">concurrency</a>, and <a href="#cancellation-retries-stalled-jobs-and-graceful-reloading">cancelable jobs with graceful shutdown</a>.  Simple, fast, and lightweight.  <strong>Made for <a href="https://forwardemail.net">Forward Email</a> and <a href="https://lad.js.org">Lad</a></strong>.
+  Works in Node v16.0.0+, uses <a href="https://nodejs.org/api/worker_threads.html">worker threads</a> (Node.js) to spawn sandboxed processes, and supports <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function">async/await</a>, <a href="https://github.com/sindresorhus/p-retry">retries</a>, <a href="https://github.com/sindresorhus/p-throttle">throttling</a>, <a href="#concurrency">concurrency</a>, and <a href="#cancellation-retries-stalled-jobs-and-graceful-reloading">cancelable jobs with graceful shutdown</a>.  Simple, fast, and lightweight. Added support to run specific jobs in <a href="https://nodejs.org/api/child_process.html#child_processforkmodulepath-args-options">forked processes</a> for memory & resource isolation.
 </div>
 
 
@@ -45,7 +37,6 @@
 * [Plugins](#plugins)
   * [Available Plugins](#available-plugins)
   * [Creating plugins for Bree](#creating-plugins-for-bree)
-* [Real-world usage](#real-world-usage)
 * [Contributors](#contributors)
 * [License](#license)
 
@@ -56,23 +47,23 @@ Bree was created to give you fine-grained control with simplicity, and has built
 
 We recommend you to query a persistent database in your jobs, to prevent specific operations from running more than once.
 
-Bree does not force you to use an additional database layer of [Redis][] or [MongoDB][] to manage job state.
+Bree does not force you to use an additional database layer of \[Redis]\[] or \[MongoDB]\[] to manage job state.
 
 In doing so, you should manage boolean job states yourself using queries.  For instance, if you have to send a welcome email to users, only send a welcome email to users that do not have a Date value set yet for `welcome_email_sent_at`.
 
 
 ## Install
 
-[npm][]:
+\[npm]\[]:
 
 ```sh
-npm install bree
+npm install @mintplex-labs/bree
 ```
 
-[yarn][]:
+\[yarn]\[]:
 
 ```sh
-yarn add bree
+yarn add @mintplex-labs/bree
 ```
 
 
@@ -89,7 +80,7 @@ To see details about upgrading from the last major version, please see [UPGRADIN
 
 The example below assumes that you have a directory `jobs` in the root of the directory from which you run this example.  For example, if the example below is at `/path/to/script.js`, then `/path/to/jobs/` must also exist as a directory.  If you wish to disable this feature, then pass `root: false` as an option.
 
-Inside this `jobs` directory are individual scripts which are run using [Workers][] per optional timeouts, and additionally, an optional interval or cron expression.  The example below contains comments, which help to clarify how this works.
+Inside this `jobs` directory are individual scripts which are run using \[Workers]\[] per optional timeouts, and additionally, an optional interval or cron expression.  The example below contains comments, which help to clarify how this works.
 
 The option `jobs` passed to a new instance of `Bree` (as shown below) is an Array.  It contains values which can either be a String (name of a job in the `jobs` directory, which is run on boot) OR it can be an Object with `name`, `path`, `timeout`, and `interval` properties.  If you do not supply a `path`, then the path is created using the root directory (defaults to `jobs`) in combination with the `name`.  If you do not supply values for `timeout` and/nor `interval`, then these values are defaulted to `0` (which is the default for both, see [index.js](https://github.com/breejs/bree/blob/master/src/index.js) for more insight into configurable default options).
 
@@ -100,7 +91,7 @@ We have also documented all [Instance Options](#instance-options) and [Job Optio
 ```js
 // app.mjs
 
-import Bree from 'bree';
+import Bree from '@mintplex-labs/bree';
 
 const bree = new Bree({
   // ... (see below) ...
@@ -128,7 +119,7 @@ const Graceful = require('@ladjs/graceful');
 const Cabin = require('cabin');
 
 // required
-const Bree = require('bree');
+const Bree = require('@mintplex-labs/bree');
 
 //
 // NOTE: see the "Instance Options" section below in this README
@@ -292,7 +283,14 @@ const bree = new Bree({
       name: 'worker-16',
       date: dayjs('1-1-2022', 'M-D-YYYY').toDate(),
       cron: '0 0 1 * *'
-    }
+    },
+
+    // runs `./jobs/worker-13.js` in a new process as opposed to a worker thread
+    {
+      name: 'worker-13',
+      interval: '2m',
+      runAs: 'process',
+    },
   ]
 });
 
@@ -368,25 +366,27 @@ Here is the full list of options and their defaults.  See [src/index.js](https:/
 | `outputWorkerMetadata`  | Boolean  | `false`                | By default worker metadata is not passed to the second Object argument of `logger`.  However if you set this to `true`, then `logger` will be invoked internally with two arguments (e.g. `logger.info('...', { worker: ... })`).  This `worker` property contains `isMainThread` (Boolean), `resourceLimits` (Object), and `threadId` (String) properties; all of which correspond to [Workers][] metadata.  This can be overridden on a per job basis. |
 | `errorHandler`          | Function | `null`                 | Set this function to receive a callback when an error is encountered during worker execution (e.g. throws an exception) or when it exits with non-zero code (e.g. `process.exit(1)`). The callback receives two parameters `error` and `workerMetadata`. Important note, when this callback is present default error logging will not be executed.                                                                                                       |
 | `workerMessageHandler`  | Function | `null`                 | Set this function to receive a callback when a worker sends a message through [parentPort.postMessage](https://nodejs.org/docs/latest-v14.x/api/worker_threads.html#worker_threads_port_postmessage_value_transferlist). The callback receives at least two parameters `name` (of the worker) and `message` (coming from `postMessage`), if `outputWorkerMetadata` is enabled additional metadata will be sent to this handler.                          |
+| `runJobsAs`             | String   | `worker`               | Run all defined jobs as a `worker` using NodeJS worker threads or `process` to run in all new `forked` processes.                                                                                                                                                                                                                                                                                                                                        |
 
 
 ## Job Options
 
 See [Interval, Timeout, Date, and Cron Validate](#interval-timeout-date-and-cron-validation) below for more insight besides this table:
 
-| Property               | Type                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                 | String                             | The name of the job.  This should match the base file path (e.g. `foo` if `foo.js` is located at `/path/to/jobs/foo.js`) unless `path` option is specified.  A value of `index`, `index.js`, and `index.mjs` are reserved values and cannot be used here.                                                                                                                                                                                                                                                       |
-| `path`                 | String                             | The path of the job or function used for spawning a new [Worker][workers] with.  If not specified, then it defaults to the value for `name` plus the default file extension specified under [Instance Options](#instance-options).                                                                                                                                                                                                                                                                              |
-| `timeout`              | Number, Object, String, or Boolean | Sets the duration in milliseconds before the job starts (it overrides the default inherited `timeout` as set in [Instance Options](#instance-options).  A value of `0` indicates it will start immediately.  This value can be a Number, String, or a Boolean of `false` (which indicates it will NOT inherit the default `timeout` from [Instance Options](#instance-options)).  See [Job Interval and Timeout Values](#job-interval-and-timeout-values) below for more insight into how this value is parsed. |
-| `interval`             | Number, Object, or String          | Sets the duration in milliseconds for the job to repeat itself, otherwise known as its interval (it overrides the default inherited `interval` as set in [Instance Options](#instance-options)).  A value of `0` indicates it will not repeat and there will be no interval.  If the value is greater than `0` then this value will be used as the interval.  See [Job Interval and Timeout Values](#job-interval-and-timeout-values) below for more insight into how this value is parsed.                     |
-| `date`                 | Date                               | This must be a valid JavaScript Date (we use `instance of Date` for comparison).  If this value is in the past, then it is not run when jobs are started (or run manually).  We recommend using [dayjs][] for creating this date, and then formatting it using the `toDate()` method (e.g. `dayjs().add('3, 'days').toDate()`).  You could also use [moment][] or any other JavaScript date library, as long as you convert the value to a Date instance here.                                                  |
-| `cron`                 | String                             | A cron expression to use as the job's interval, which is validated against [cron-validate][] and parsed by [later][].                                                                                                                                                                                                                                                                                                                                                                                           |
-| `hasSeconds`           | Boolean                            | Overrides the [Instance Options](#instance-options) `hasSeconds` property if set.  Note that setting this to `true` will automatically set `cronValidate` defaults to have `{ preset: 'default', override: { useSeconds: true } }`                                                                                                                                                                                                                                                                              |
-| `cronValidate`         | Object                             | Overrides the [Instance Options](#instance-options) `cronValidate` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `closeWorkerAfterMs`   | Number                             | Overrides the [Instance Options](#instance-options) `closeWorkerAfterMs` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `worker`               | Object                             | Overrides the [Instance Options](#instance-options) `worker` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `outputWorkerMetadata` | Boolean                            | Overrides the [Instance Options](#instance-options) `outputWorkerMetadata` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Property               | Type                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                                                                                                                                     |
+| ---------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                 | String                             | The name of the job.  This should match the base file path (e.g. `foo` if `foo.js` is located at `/path/to/jobs/foo.js`) unless `path` option is specified.  A value of `index`, `index.js`, and `index.mjs` are reserved values and cannot be used here.                                                                                                                                                                                                                                                       |                                                                                                                                                                     |
+| `path`                 | String                             | The path of the job or function used for spawning a new [Worker][workers] with.  If not specified, then it defaults to the value for `name` plus the default file extension specified under [Instance Options](#instance-options).                                                                                                                                                                                                                                                                              |                                                                                                                                                                     |
+| `timeout`              | Number, Object, String, or Boolean | Sets the duration in milliseconds before the job starts (it overrides the default inherited `timeout` as set in [Instance Options](#instance-options).  A value of `0` indicates it will start immediately.  This value can be a Number, String, or a Boolean of `false` (which indicates it will NOT inherit the default `timeout` from [Instance Options](#instance-options)).  See [Job Interval and Timeout Values](#job-interval-and-timeout-values) below for more insight into how this value is parsed. |                                                                                                                                                                     |
+| `interval`             | Number, Object, or String          | Sets the duration in milliseconds for the job to repeat itself, otherwise known as its interval (it overrides the default inherited `interval` as set in [Instance Options](#instance-options)).  A value of `0` indicates it will not repeat and there will be no interval.  If the value is greater than `0` then this value will be used as the interval.  See [Job Interval and Timeout Values](#job-interval-and-timeout-values) below for more insight into how this value is parsed.                     |                                                                                                                                                                     |
+| `date`                 | Date                               | This must be a valid JavaScript Date (we use `instance of Date` for comparison).  If this value is in the past, then it is not run when jobs are started (or run manually).  We recommend using [dayjs][] for creating this date, and then formatting it using the `toDate()` method (e.g. `dayjs().add('3, 'days').toDate()`).  You could also use [moment][] or any other JavaScript date library, as long as you convert the value to a Date instance here.                                                  |                                                                                                                                                                     |
+| `cron`                 | String                             | A cron expression to use as the job's interval, which is validated against [cron-validate][] and parsed by [later][].                                                                                                                                                                                                                                                                                                                                                                                           |                                                                                                                                                                     |
+| `hasSeconds`           | Boolean                            | Overrides the [Instance Options](#instance-options) `hasSeconds` property if set.  Note that setting this to `true` will automatically set `cronValidate` defaults to have `{ preset: 'default', override: { useSeconds: true } }`                                                                                                                                                                                                                                                                              |                                                                                                                                                                     |
+| `cronValidate`         | Object                             | Overrides the [Instance Options](#instance-options) `cronValidate` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                                                                                                                                     |
+| `closeWorkerAfterMs`   | Number                             | Overrides the [Instance Options](#instance-options) `closeWorkerAfterMs` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                                                                                     |
+| `worker`               | Object                             | Overrides the [Instance Options](#instance-options) `worker` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                                                                     |
+| `outputWorkerMetadata` | Boolean                            | Overrides the [Instance Options](#instance-options) `outputWorkerMetadata` property if set.                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                                                                                                                                     |
+| `runAs`                | String                             | `worker`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Run specific job as a `worker` using NodeJS worker threads or `process` to run in all new `forked` processes.  Will be overridden by BreeConfig `runJobsAs` if set. |
 
 
 ## Job Interval and Timeout Values
@@ -394,8 +394,8 @@ See [Interval, Timeout, Date, and Cron Validate](#interval-timeout-date-and-cron
 These values can include Number, Object, and String variable types:
 
 * Number values indicates the number of milliseconds for the timeout or interval
-* Object values must be a [later][] schedule object value (e.g. `later.parse.cron('15 10 * * ? *'))`)
-* String values can be either a [later][], [human-interval][], or [ms][] String values (e.g. [later][] supports Strings such as `every 5 mins`, [human-interval][] supports Strings such as `3 days and 4 hours`, and [ms][] supports Strings such as `4h` for four hours)
+* Object values must be a \[later]\[] schedule object value (e.g. `later.parse.cron('15 10 * * ? *'))`)
+* String values can be either a \[later]\[], \[human-interval]\[], or \[ms]\[] String values (e.g. \[later]\[] supports Strings such as `every 5 mins`, \[human-interval]\[] supports Strings such as `3 days and 4 hours`, and \[ms]\[] supports Strings such as `4h` for four hours)
 
 
 ## Listening for events
@@ -457,7 +457,7 @@ new Bree({
 
 ## Cancellation, Retries, Stalled Jobs, and Graceful Reloading
 
-We recommend that you listen for "cancel" event in your worker paths.  Doing so will allow you to handle graceful cancellation of jobs.  For example, you could use [p-cancelable][]
+We recommend that you listen for "cancel" event in your worker paths.  Doing so will allow you to handle graceful cancellation of jobs.  For example, you could use \[p-cancelable]\[]
 
 Here's a quick example of how to do that (e.g. `./jobs/some-worker.js`):
 
@@ -484,20 +484,20 @@ if (parentPort)
   });
 ```
 
-If you'd like jobs to retry, simply wrap your usage of promises with [p-retry][].
+If you'd like jobs to retry, simply wrap your usage of promises with \[p-retry]\[].
 
 We leave it up to you to have as much fine-grained control as you wish.
 
-See [@ladjs/graceful][lad-graceful] for more insight into how this package works.
+See \[@ladjs/graceful]\[lad-graceful] for more insight into how this package works.
 
 
 ## Interval, Timeout, Date, and Cron Validation
 
 If you need help writing cron expressions, you can reference [crontab.guru](https://crontab.guru/).
 
-We support [later][], [human-interval][], or [ms][] String values for both `timeout` and `interval`.
+We support \[later]\[], \[human-interval]\[], or \[ms]\[] String values for both `timeout` and `interval`.
 
-If you pass a `cron` property, then it is validated against [cron-validate][].
+If you pass a `cron` property, then it is validated against \[cron-validate]\[].
 
 You can pass a Date as the `date` property, but you cannot combine both `date` and `timeout`.
 
@@ -531,7 +531,7 @@ const ms = require('ms');
 
 To close out the worker and signal that it is done, you can simply `parentPort.postMessage('done');` and/or `process.exit(0)`.
 
-While writing your jobs (which will run in [worker][workers] threads), you should do one of the following:
+While writing your jobs (which will run in \[worker]\[workers] threads), you should do one of the following:
 
 * Signal to the main thread that the process has completed by sending a "done" message (per the example above in [Writing jobs with Promises and async-await](#writing-jobs-with-promises-and-async-await))
 * Exit the process if there is NOT an error with code `0` (e.g. `process.exit(0);`)
@@ -552,9 +552,9 @@ As of v6.0.0 when you pass `closeWorkerAfterMs`, the timer will start once the w
 
 ## Complex timeouts and intervals
 
-Since we use [later][], you can pass an instance of `later.parse.recur`, `later.parse.cron`, or `later.parse.text` as the `timeout` or `interval` property values (e.g. if you need to construct something manually).
+Since we use \[later]\[], you can pass an instance of `later.parse.recur`, `later.parse.cron`, or `later.parse.text` as the `timeout` or `interval` property values (e.g. if you need to construct something manually).
 
-You can also use [dayjs][] to construct dates (e.g. from now or a certain date) to millisecond differences using `dayjs().diff(new Date(), 'milliseconds')`.  You would then pass that returned Number value as `timeout` or `interval` as needed.
+You can also use \[dayjs]\[] to construct dates (e.g. from now or a certain date) to millisecond differences using `dayjs().diff(new Date(), 'milliseconds')`.  You would then pass that returned Number value as `timeout` or `interval` as needed.
 
 
 ## Custom Worker Options
@@ -586,6 +586,7 @@ new Bree({
     {
       name: 'job with function',
       path: someFunction
+      // runAs: property will always be "worker" when using direct function.
     }
   ]
 });
@@ -654,60 +655,15 @@ Plugins should be a function that recieves an `options` object and the `Bree` cl
 ```
 
 
-## Real-world usage
-
-More detailed examples can be found in [Forward Email][forward-email], [Lad][], and [Ghost][ghost].
-
-
 ## Contributors
 
-| Name             | Website                           |
-| ---------------- | --------------------------------- |
-| **Nick Baugh**   | <http://niftylettuce.com/>        |
-| **shadowgate15** | <https://github.com/shadowgate15> |
+| Name                  | Website                           |
+| --------------------- | --------------------------------- |
+| **Mintplex Labs Inc** | <https://mintplexlabs.com>        |
+| **Nick Baugh**        | <http://niftylettuce.com/>        |
+| **shadowgate15**      | <https://github.com/shadowgate15> |
 
 
 ## License
 
-[MIT](LICENSE) © [Nick Baugh](http://niftylettuce.com/)
-
-
-##
-
-<a href="#"><img src="https://d1i8ikybhfrv4r.cloudfront.net/bree/footer.png" alt="#" /></a>
-
-[ms]: https://github.com/vercel/ms
-
-[human-interval]: https://github.com/agenda/human-interval
-
-[npm]: https://www.npmjs.com/
-
-[yarn]: https://yarnpkg.com/
-
-[workers]: https://nodejs.org/api/worker_threads.html
-
-[lad]: https://lad.js.org
-
-[p-retry]: https://github.com/sindresorhus/p-retry
-
-[p-cancelable]: https://github.com/sindresorhus/p-cancelable
-
-[later]: https://breejs.github.io/later/parsers.html
-
-[cron-validate]: https://github.com/Airfooox/cron-validate
-
-[forward-email]: https://github.com/forwardemail/forwardemail.net
-
-[dayjs]: https://github.com/iamkun/dayjs
-
-[redis]: https://redis.io/
-
-[mongodb]: https://www.mongodb.com/
-
-[lad-graceful]: https://github.com/ladjs/graceful
-
-[cabin]: https://cabinjs.com
-
-[moment]: https://momentjs.com
-
-[ghost]: https://ghost.org/
+[MIT](LICENSE) © Mintplex Labs Inc

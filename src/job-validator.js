@@ -306,6 +306,15 @@ const validate = async (job, i, names, config) => {
     }
   }
 
+  // Validate runAs
+  if (job.runAs !== undefined && !['worker', 'process'].includes(job.runAs)) {
+    errors.push(
+      new Error(
+        `${prefix} had runAs value set, but it must be an "worker" or "process"`
+      )
+    );
+  }
+
   if (errors.length > 0) {
     throw combineErrors(errors);
   }

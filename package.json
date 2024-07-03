@@ -1,13 +1,14 @@
 {
-  "name": "bree",
-  "description": "The best job scheduler for Node.js and JavaScript with cron, dates, ms, later, and human-friendly support.  Works in Node v12.17.0+, uses worker threads to spawn sandboxed processes, and supports async/await, retries, throttling, concurrency, and cancelable promises (graceful shutdown).  Simple, fast, and lightweight.  Made for Forward Email and Lad.",
+  "name": "@mintplex-labs/bree",
+  "description": "A fork of BreeJS/bree. A Node.js and JavaScript task scheduler with cron, dates, ms, later, and human-friendly support.  Works in Node v12.17.0+, uses worker threads or process forks, and supports async/await, retries, throttling, concurrency, and cancelable promises (graceful shutdown).  Simple, fast, and lightweight. Customized for AnythingLLM.",
   "version": "9.2.3",
-  "author": "Nick Baugh <niftylettuce@gmail.com> (http://niftylettuce.com/)",
+  "author": "Mintplex Labs Inc <team@mintplexlabs.com>",
   "bugs": {
-    "url": "https://github.com/breejs/bree/issues",
-    "email": "niftylettuce@gmail.com"
+    "url": "https://github.com/Mintplex-Labs/bree/issues",
+    "email": "team@mintplexlabs.com"
   },
   "contributors": [
+    "Mintplex Labs Inc <tim@mintplexlabs.com> (https://mintplexlabs.com)",
     "Nick Baugh <niftylettuce@gmail.com> (http://niftylettuce.com/)",
     "shadowgate15 (https://github.com/shadowgate15)"
   ],
@@ -49,12 +50,12 @@
     "xo": "0.54"
   },
   "engines": {
-    "node": ">=12.17.0 <13.0.0-0||>=13.2.0"
+    "node": ">=16.0.0"
   },
   "files": [
     "src"
   ],
-  "homepage": "https://github.com/breejs/bree",
+  "homepage": "https://github.com/Mintplex-Labs/bree",
   "keywords": [
     "agenda",
     "async",
@@ -143,7 +144,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breejs/bree"
+    "url": "https://github.com/Mintplex-Labs/bree"
   },
   "scripts": {
     "ava": "cross-env NODE_ENV=test ava",

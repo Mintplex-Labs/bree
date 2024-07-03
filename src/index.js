@@ -8,6 +8,7 @@ const { pathToFileURL } = require('node:url');
 const { Worker } = require('node:worker_threads');
 const { join, resolve } = require('node:path');
 const { debuglog } = require('node:util');
+const { fork } = require('node:child_process');
 const combineErrors = require('combine-errors');
 const isSANB = require('is-string-and-not-blank');
 const isValidPath = require('is-valid-path');
@@ -105,6 +106,10 @@ class Bree extends EventEmitter {
       // });
       //
       outputWorkerMetadata: false,
+      //
+      // Specify to run all jobs as "worker" or  "process" instead of passing
+      // "runAs" into each specific job.
+      runJobsAs: null,
       ...config
     };
 
@@ -663,10 +668,11 @@ class Bree extends EventEmitter {
               `Gracefully cancelled worker for job "${name}"`,
               this.getWorkerMetadata(name)
             );
-            this.workers.get(name).terminate();
+            this.#terminate(this.workers.get(name));
           }
         });
-        this.workers.get(name).postMessage('cancel');
+
+        this.#cancel(this.workers.get(name));
       }
 
       this.removeSafeTimer('closeWorkerAfterMs', name);
@@ -679,6 +685,16 @@ class Bree extends EventEmitter {
     }
 
     return pWaitFor(() => this.workers.size === 0);
+  }
+
+  #terminate(worker) {
+    if (worker?.terminate) worker.terminate();
+    else worker.kill(0);
+  }
+
+  #cancel(worker) {
+    if (worker?.postMessage) worker.postMessage('cancel');
+    else worker.kill(0);
   }
 
   async add(jobs) {
@@ -761,6 +777,33 @@ class Bree extends EventEmitter {
   }
 
   createWorker(filename, options) {
+    if (options.workerData.job.runAs === 'process') {
+      const childProcess = fork(filename, [], {
+        env: {
+          // eslint-disable-next-line n/prefer-global/process
+          ...process.env
+        }
+      });
+
+      // Pipe stdout/stderr from process to logger if attached
+      if (this.config.logger) {
+        childProcess
+          .on('message', (message) => {
+            this.config.logger.info(message);
+          })
+          .on('exit', (code, signal) => {
+            this.config.logger.warn(
+              `Child process exited with code ${code} and signal ${signal}`
+            );
+          })
+          .on('error', (err) => {
+            this.config.logger.error('Child process error:', err);
+          });
+      }
+
+      return childProcess;
+    }
+
     return new Worker(filename, options);
   }
 
