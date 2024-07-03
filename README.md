@@ -1,4 +1,4 @@
-> \[!IMPORTANT]\
+> [!IMPORTANT]
 > This is a customized fork of [BreeJS](https://github.com/breejs/bree) the allows use of multi-process support as well
 > as worker threads. You should use the original project if you only need worker thread support.
 
