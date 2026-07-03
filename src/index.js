@@ -782,7 +782,10 @@ class Bree extends EventEmitter {
         env: {
           // eslint-disable-next-line n/prefer-global/process
           ...process.env
-        }
+        },
+        ...(options.workerData.job.execPath && {
+          execPath: options.workerData.job.execPath
+        })
       });
 
       // Pipe stdout/stderr from process to logger if attached
