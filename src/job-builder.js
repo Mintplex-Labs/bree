@@ -73,7 +73,18 @@ const buildJob = (job, config) => {
           )
         );
 
-    if (isValidPath(path)) {
+    // `is-valid-path` (via `is-glob`) mistakes parenthesized segments for
+    // extglob patterns and rejects real paths such as
+    // `C:\Program Files (x86)\...` or `/home/john (work)/...`. When the path
+    // validates once parenthesized groups are removed, the parens were the
+    // sole cause of rejection, so this is a file path, not an eval string
+    // (see Mintplex-Labs/anything-llm#6481).
+    const pathWithoutParenGroups = path.replace(/\([^()]*\)/g, '');
+    if (
+      isValidPath(path) ||
+      (pathWithoutParenGroups !== path &&
+        isValidPath(pathWithoutParenGroups))
+    ) {
       job.path = path;
     } else {
       // Assume that it's a transformed eval string
